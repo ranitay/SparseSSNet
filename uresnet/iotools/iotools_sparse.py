@@ -178,6 +178,8 @@ class io_larcv_sparse(io_base):
         self.set_index_start(0)
 
     def initialize(self):
+	plane_id = self._flags.PLANE
+	print('________________plane id is %d_________________' % plane_id)
         self._event_keys = []
         self._metas = []
         # configure the input
@@ -216,7 +218,10 @@ class io_larcv_sparse(io_base):
         # ch_label  = None
         # if self._flags.LABEL_KEY:
         #     ch_label  = TChain('%s_%s_tree' % (dtype_keyword,self._flags.LABEL_KEY))
-        for f in self._flags.INPUT_FILE:
+        bla=0
+	for f in self._flags.INPUT_FILE:
+	    print(bla)
+	    bla=bla+1	
             for ch in ch_blob.values():
                 ch.AddFile(f)
 
@@ -231,7 +236,6 @@ class io_larcv_sparse(io_base):
         total_sample = 0.
         total_point = 0.
         total_data = 0.
-
         for entry in range(ach.GetEntries()):
             if self._flags.LIMIT_NUM_SAMPLE > 0 and entry == self._flags.LIMIT_NUM_SAMPLE:
                 break
@@ -263,15 +267,20 @@ class io_larcv_sparse(io_base):
             #         print(key, br_blob[key])
 
             if self._flags.DATA_DIM == 2:
-                num_point = br_blob[self._flags.DATA_KEYS[0]].as_vector().front().as_vector().size()
+		#num_point = 10
+#		num_point = br_blob[self._flags.DATA_KEYS[0]].as_vector().front().as_vector().size()
+               num_point = br_blob[self._flags.DATA_KEYS[0]].as_vector().at(plane_id).as_vector().size()
+
             else:
                 num_point = br_blob[self._flags.DATA_KEYS[0]].as_vector().size()
             if num_point < 1: continue
-
             # special treatment for the data
             br_data = br_blob[self._flags.DATA_KEYS[0]]
+
+
             if self._flags.DATA_DIM == 2:
-                br_data = br_data.as_vector().front()
+#                br_data = br_data.as_vector().front()
+		 br_data = br_data.as_vector().at(plane_id)
             np_data  = np.zeros(shape=(num_point, self._flags.DATA_DIM+1),dtype=np.float32)
             as_numpy_pcloud(br_data, np_data)
             total_data += np_data.size
@@ -301,7 +310,8 @@ class io_larcv_sparse(io_base):
                     continue
                 br = br_blob[key]
                 if self._flags.DATA_DIM == 2:
-                    br = br.as_vector().front()
+#                    br = br.as_vector().front()
+		    br = br.as_vector().at(plane_id)
                 np_data = np.zeros(shape=(num_point,1),dtype=np.float32)
                 as_numpy_pcloud(br,np_data)
                 total_data += np_data.size
@@ -445,7 +455,12 @@ IOManager: {
             vs = as_tensor(voxel,feature,meta,0.)
         elif self._flags.DATA_DIM == 2:
             data = self._blob[self._flags.DATA_KEYS[0]][idx].reshape((-1,))
+	    print('idx = %d ' % idx)
+	    print('__________________%s___________________' % np.arange(data.shape[0]))
             vs = as_tensor(data, np.arange(data.shape[0]))
+#	    vs = as_tensor(voxel,feature,meta,0.)
+
+	
         larcv_data.set(vs,meta)
 
         score = np.max(softmax,axis=1).reshape([-1])

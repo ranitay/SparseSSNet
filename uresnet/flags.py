@@ -37,6 +37,7 @@ class URESNET_FLAGS:
     CHECKPOINT_STEP  = 500
 
     # flags for IO
+    PLANE      = 0
     IO_TYPE    = ''
     INPUT_FILE = ''
     OUTPUT_FILE = ''
@@ -55,6 +56,8 @@ class URESNET_FLAGS:
         self._build_parsers()
 
     def _attach_common_args(self,parser):
+        parser.add_argument('-pl','--plane', type=int, default=0,
+                            help='Which Plane [default: %s]' % self.PLANE)
         parser.add_argument('-db','--debug',type=strtobool,default=self.DEBUG,
                             help='Extra verbose mode for debugging [default: %s]' % self.DEBUG)
         parser.add_argument('-ld','--log_dir', default=self.LOG_DIR,

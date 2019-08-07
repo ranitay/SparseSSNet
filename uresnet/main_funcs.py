@@ -382,33 +382,34 @@ def full_inference_loop(flags, handlers):
         res[key] = global_metrics[key]
     # print(res)
     for i, idx in enumerate(res['id']):
-        handlers.metrics_logger.record(('iteration', 'id', 'acc', 'nonzero_pixels'),
-                (res['iteration'][i], idx, res['acc'][i], res['nonzero_pixels'][i]))
-        if 'loss_seg' in res:
-            handlers.metrics_logger.record(('loss_seg',), (res['loss_seg'][i],))
-        if 'correct_softmax' in res:
-            handlers.metrics_logger.record(('correct_softmax',), (res['correct_softmax'][i],))
+#       handlers.metrics_logger.record(('iteration', 'id', 'acc', 'nonzero_pixels'),
+#                (res['iteration'][i], idx, res['acc'][i], res['nonzero_pixels'][i]))
+#        if 'loss_seg' in res:
+#            handlers.metrics_logger.record(('loss_seg',), (res['loss_seg'][i],))
+#        if 'correct_softmax' in res:
+#            handlers.metrics_logger.record(('correct_softmax',), (res['correct_softmax'][i],))
         # if 'cluster_acc' in res:
         #     handlers.metrics_logger.record(('cluster_acc',), (res['cluster_acc'][i],))
-        if 'class_acc' in res:
-            handlers.metrics_logger.record(['class_%d_acc' % c for c in range(len(res['class_acc'][i]))], [res['class_acc'][i][c] for c in range(len(res['class_acc'][i]))])
+#        if 'class_acc' in res:
+#            handlers.metrics_logger.record(['class_%d_acc' % c for c in range(len(res['class_acc'][i]))], [res['class_acc'][i][c] for c in range(len(res['class_acc'][i]))])
         # if 'class_cluster_acc' in res:
         #     handlers.metrics_logger.record(['class_%d_cluster_acc' % c for c in range(len(res['class_cluster_acc'][i]))], [res['class_cluster_acc'][i][c] for c in range(len(res['class_cluster_acc'][i]))])
-        if 'class_pixel' in res:
-            handlers.metrics_logger.record(['class_%d_pixel' % c for c in range(len(res['class_pixel'][i]))], [res['class_pixel'][i][c] for c in range(len(res['class_pixel'][i]))])
-        if 'class_mean_softmax' in res:
-            handlers.metrics_logger.record(['class_%d_mean_softmax' % c for c in range(len(res['class_mean_softmax'][i]))], [res['class_mean_softmax'][i][c] for c in range(len(res['class_mean_softmax'][i]))])
+#        if 'class_pixel' in res:
+#            handlers.metrics_logger.record(['class_%d_pixel' % c for c in range(len(res['class_pixel'][i]))], [res['class_pixel'][i][c] for c in range(len(res['class_pixel'][i]))])
+#        if 'class_mean_softmax' in res:
+#            handlers.metrics_logger.record(['class_%d_mean_softmax' % c for c in range(len(res['class_mean_softmax'][i]))], [res['class_mean_softmax'][i][c] for c in range(len(res['class_mean_softmax'][i]))])
         if 'confusion_matrix' in res:
             num_classes = res['confusion_matrix'][0].shape[0]
             for c in range(num_classes):
                 handlers.metrics_logger.record(['confusion_%d_%d' % (c, c2) for c2 in range(num_classes)], [res['confusion_matrix'][i][c][c2] for c2 in range(num_classes)])
-        if 'energy_confusion_matrix' in res:
-            num_classes = res['energy_confusion_matrix'][0].shape[0]
-            for c in range(num_classes):
-                handlers.metrics_logger.record(['energy_confusion_%d_%d' % (c, c2) for c2 in range(num_classes)], [res['energy_confusion_matrix'][i][c][c2] for c2 in range(num_classes)])
-        if 'distances' in res:
-            for j, bin in enumerate(res['distances'][i]):
-                handlers.metrics_logger.record(['bin_%d' % j], [bin])
+#        if 'energy_confusion_matrix' in res:
+#            num_classes = res['energy_confusion_matrix'][0].shape[0]
+#            for c in range(num_classes):
+#		print ('############## %d/%d #############' % (c,num_classes) )
+#                handlers.metrics_logger.record(['energy_confusion_%d_%d' % (c, c2) for c2 in range(num_classes)], [res['energy_confusion_matrix'][i][c][c2] for c2 in range(num_classes)])
+#       if 'distances' in res:
+#            for j, bin in enumerate(res['distances'][i]):
+#                handlers.metrics_logger.record(['bin_%d' % j], [bin])
         if flags.PARTICLE:
             handlers.metrics_logger.record(['michel_num', 'michel_actual_num', 'michel_npx', 'michel_creation_momentum',
                                             'michel_start_x', 'michel_start_y', 'michel_start_z',
@@ -440,6 +441,7 @@ def full_inference_loop(flags, handlers):
                 handlers.michel_logger2.write()
         handlers.metrics_logger.write()
 
+    '''    
     if 'misclassified_pixels' in res:
         res['misclassified_pixels'] = np.concatenate(res['misclassified_pixels'], axis=0)
         for i, x in enumerate(res['misclassified_pixels']):
@@ -451,7 +453,7 @@ def full_inference_loop(flags, handlers):
             for d in range(flags.DATA_DIM):
                 handlers.pixels_logger.record(['pixel_coord_%d' % d], [x[d]])
             handlers.pixels_logger.write()
-
+    '''
     # Finalize
     if handlers.csv_logger:
         handlers.csv_logger.close()
