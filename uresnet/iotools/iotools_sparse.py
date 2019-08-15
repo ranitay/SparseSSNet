@@ -178,8 +178,140 @@ class io_larcv_sparse(io_base):
         self.set_index_start(0)
 
     def initialize(self):
-	plane_id = self._flags.PLANE
-	print('________________plane id is %d_________________' % plane_id)
+        plane_id = self._flags.PLANE
+        print('________________plane id is %d_________________' % plane_id)
+        self._event_keys = []
+        self._metas = []
+        # configure the input
+        from larcv import larcv
+        from ROOT import TChain
+        dtype_keyword  = ''
+        as_numpy_voxels = larcv.fill_2d_voxels
+        as_numpy_pcloud = larcv.fill_2d_pcloud
+        dtype_keyword   = 'sparse2d'
+        as_meta = larcv.ImageMeta
+        ch_blob = {}
+        br_blob = {}
+        self._blob['voxels'] = []
+        self._blob['feature'] = []
+        total_sample = 0.
+        total_point = 0.
+        total_data = 0.
+        for key in self._flags.DATA_KEYS:
+            self._blob[key] = []
+        for file_number,f in enumerate(self._flags.INPUT_FILE):
+            for key in self._flags.DATA_KEYS:
+                if self._flags.COMPUTE_WEIGHT and key == self._flags.DATA_KEYS[2]:
+                    continue
+                ch_blob[key] = TChain('%s_%s_tree' % (dtype_keyword, key))
+            for ch in ch_blob.values():
+                ch.AddFile(f)
+            print(ch_blob.values())
+            ach = ch_blob.values()[0]
+            event_fraction = 1./ach.GetEntries() * 100.
+            if self._flags.LIMIT_NUM_SAMPLE > 0:
+                event_fraction = 1./self._flags.LIMIT_NUM_SAMPLE * 100.
+
+
+            for entry in range(ach.GetEntries()):
+                if self._flags.LIMIT_NUM_SAMPLE > 0 and entry == self._flags.LIMIT_NUM_SAMPLE:
+                    break
+                for key, ch in ch_blob.iteritems():
+                    ch.GetEntry(entry)
+                    if entry == 0:
+                        if key == 'mcst':
+                            br_blob[key] = getattr(ch, 'particle_mcst_branch')
+                        else:
+                            br_blob[key] = getattr(ch, '%s_%s_branch' % (dtype_keyword, key))
+
+                self._event_keys.append((br_blob[self._flags.DATA_KEYS[0]].run(),
+                                         br_blob[self._flags.DATA_KEYS[0]].subrun(),
+                                         br_blob[self._flags.DATA_KEYS[0]].event()))
+                num_point = br_blob[self._flags.DATA_KEYS[0]].as_vector().at(plane_id).as_vector().size()
+
+                if num_point < 1: continue
+                # special treatment for the data
+                br_data = br_blob[self._flags.DATA_KEYS[0]]
+                br_data = br_data.as_vector().at(plane_id)
+                np_data  = np.zeros(shape=(num_point, self._flags.DATA_DIM+1),dtype=np.float32)
+                as_numpy_pcloud(br_data, np_data)
+                total_data += np_data.size
+                self._blob[self._flags.DATA_KEYS[0]].append(np_data)
+
+                self._metas.append(as_meta(br_data.meta()))
+
+                np_voxel   = np.zeros(shape=(num_point,self._flags.DATA_DIM),dtype=np.int32)
+                as_numpy_voxels(br_data, np_voxel)
+                total_data += np_voxel.size
+                self._blob['voxels'].append(np_voxel)
+
+                np_feature = np.zeros(shape=(num_point,1),dtype=np.float32)
+                as_numpy_pcloud(br_data,  np_feature)
+                total_data += np_feature.size
+                self._blob['feature'].append(np_feature)
+
+
+                # for the rest, different treatment
+                for key in self._flags.DATA_KEYS[1:]:
+                    if self._flags.COMPUTE_WEIGHT and key == self._flags.DATA_KEYS[2]:
+                        continue
+                    br = br_blob[key]
+                    br = br.as_vector().at(plane_id)
+                    np_data = np.zeros(shape=(num_point,1),dtype=np.float32)
+                    as_numpy_pcloud(br,np_data)
+                    total_data += np_data.size
+                    self._blob[key].append(np_data)
+
+                    # if weights need to be computed, compute here using label (index 1)
+                    if self._flags.COMPUTE_WEIGHT:
+                        labels  = self._blob[self._flags.DATA_KEYS[1]][-1]
+                        weights = np.zeros(shape=labels.shape,dtype=np.float32)
+                        classes,counts = np.unique(labels,return_counts=True)
+                        for c in range(len(classes)):
+                            idx = np.where(labels == float(c))[0]
+                            weights[idx] = float(len(labels))/(len(classes))/counts[c]
+                        self._blob[self._flags.DATA_KEYS[2]].append(weights)
+
+                    total_point  += num_point
+                    total_sample += 1.
+                    sys.stdout.write('Processed %d samples (%d%% ... %d MB\r' % (int(total_sample),int(event_fraction*entry),int(total_data*4/1.e6)))
+                    sys.stdout.flush()
+
+                sys.stdout.write('\n')
+                sys.stdout.write('Total: %d samples (%d points) ... %d MB\n' % (total_sample,total_point,total_data*4/1.e6))
+                sys.stdout.flush()
+                data = self._blob[self._flags.DATA_KEYS[0]]
+                self._num_channels = data[0].shape[-1]
+                self._num_entries = len(data)
+    # Output
+                if self._flags.OUTPUT_FILE:
+                    import tempfile
+                    cfg = '''
+        IOManager: {
+              Verbosity:   2
+              Name:        "IOManager"
+              IOMode:      1
+              OutFileName: "%s"
+              InputFiles:  []
+              InputDirs:   []
+              StoreOnlyType: []
+              StoreOnlyName: []
+            }
+                          '''
+                    cfg = cfg % self._flags.OUTPUT_FILE
+                    cfg_file = tempfile.NamedTemporaryFile('w')
+                    cfg_file.write(cfg)
+                    cfg_file.flush()
+                    self._fout = larcv.IOManager(cfg_file.name)
+                    self._fout.initialize()
+        print('done')
+## Continoue here this should work
+
+
+
+    def initializeOrig(self):
+        plane_id = self._flags.PLANE
+        print('________________plane id is %d_________________' % plane_id)
         self._event_keys = []
         self._metas = []
         # configure the input
@@ -200,7 +332,6 @@ class io_larcv_sparse(io_base):
         else:
             print('larcv IO not implemented for data dimension', self._flags.DATA_DIM)
             raise NotImplementedError
-
         ch_blob = {}
         br_blob = {}
         self._blob['voxels'] = []
@@ -214,21 +345,11 @@ class io_larcv_sparse(io_base):
             ch_blob[key] = TChain('%s_%s_tree' % (dtype_keyword, key))
         if self._flags.PARTICLE:
             ch_blob['mcst'] = TChain('particle_mcst_tree')
-        # ch_data   = TChain('%s_%s_tree' % (dtype_keyword,self._flags.DATA_KEY))
-        # ch_label  = None
-        # if self._flags.LABEL_KEY:
-        #     ch_label  = TChain('%s_%s_tree' % (dtype_keyword,self._flags.LABEL_KEY))
-        bla=0
-	for f in self._flags.INPUT_FILE:
-	    print(bla)
-	    bla=bla+1	
+
+        for f in self._flags.INPUT_FILE:
             for ch in ch_blob.values():
                 ch.AddFile(f)
 
-        # self._voxel   = []
-        # self._feature = []
-        # self._label   = []
-        # br_data,br_label=(None,None)
         ach = ch_blob.values()[0]
         event_fraction = 1./ach.GetEntries() * 100.
         if self._flags.LIMIT_NUM_SAMPLE > 0:
@@ -248,39 +369,22 @@ class io_larcv_sparse(io_base):
                         br_blob[key] = getattr(ch, '%s_%s_branch' % (dtype_keyword, key))
 
 
-            # ch_data.GetEntry(i)
-            # if ch_label:  ch_label.GetEntry(i)
-            # if br_data is None:
-            #     br_data  = getattr(ch_data, '%s_%s_branch' % (dtype_keyword,self._flags.DATA_KEY))
-            #     if ch_label:  br_label  = getattr(ch_label, '%s_%s_branch' % (dtype_keyword,self._flags.LABEL_KEY))
-
             self._event_keys.append((br_blob[self._flags.DATA_KEYS[0]].run(),
                                      br_blob[self._flags.DATA_KEYS[0]].subrun(),
                                      br_blob[self._flags.DATA_KEYS[0]].event()))
-            # print(dir(br_blob[self._flags.DATA_KEYS[0]].sparse_tensor_2d()))
-            #
-
-            # HACK that should go away when unifying 2d and 3d data reps...
-            # if self._flags.DATA_DIM == 2:
-            #     for key in br_blob:
-            #         br_blob[key] = br_blob[key].as_vector().front()
-            #         print(key, br_blob[key])
 
             if self._flags.DATA_DIM == 2:
-		#num_point = 10
-#		num_point = br_blob[self._flags.DATA_KEYS[0]].as_vector().front().as_vector().size()
-               num_point = br_blob[self._flags.DATA_KEYS[0]].as_vector().at(plane_id).as_vector().size()
+                num_point = br_blob[self._flags.DATA_KEYS[0]].as_vector().at(plane_id).as_vector().size()
 
             else:
                 num_point = br_blob[self._flags.DATA_KEYS[0]].as_vector().size()
             if num_point < 1: continue
-            # special treatment for the data
+                # special treatment for the data
             br_data = br_blob[self._flags.DATA_KEYS[0]]
 
 
             if self._flags.DATA_DIM == 2:
-#                br_data = br_data.as_vector().front()
-		 br_data = br_data.as_vector().at(plane_id)
+                br_data = br_data.as_vector().at(plane_id)
             np_data  = np.zeros(shape=(num_point, self._flags.DATA_DIM+1),dtype=np.float32)
             as_numpy_pcloud(br_data, np_data)
             total_data += np_data.size
@@ -288,11 +392,6 @@ class io_larcv_sparse(io_base):
 
             self._metas.append(as_meta(br_data.meta()))
 
-            # FIXME HACK that should go away when unifying 2d and 3d data reps...
-            # if self._flags.DATA_DIM == 2:
-            #     self._metas.append(larcv.ImageMeta(br_label.meta()))
-            # else:
-            #     self._metas.append(larcv.Voxel3DMeta(br_data.meta()))
 
             np_voxel   = np.zeros(shape=(num_point,self._flags.DATA_DIM),dtype=np.int32)
             as_numpy_voxels(br_data, np_voxel)
@@ -310,60 +409,60 @@ class io_larcv_sparse(io_base):
                     continue
                 br = br_blob[key]
                 if self._flags.DATA_DIM == 2:
-#                    br = br.as_vector().front()
-		    br = br.as_vector().at(plane_id)
+    #               br = br.as_vector().front()
+                    br = br.as_vector().at(plane_id)
                 np_data = np.zeros(shape=(num_point,1),dtype=np.float32)
                 as_numpy_pcloud(br,np_data)
                 total_data += np_data.size
                 self._blob[key].append(np_data)
 
-            # if weights need to be computed, compute here using label (index 1)
-            if self._flags.COMPUTE_WEIGHT:
-                labels  = self._blob[self._flags.DATA_KEYS[1]][-1]
-                weights = np.zeros(shape=labels.shape,dtype=np.float32)
-                classes,counts = np.unique(labels,return_counts=True)
-                for c in range(len(classes)):
-                    idx = np.where(labels == float(c))[0]
-                    weights[idx] = float(len(labels))/(len(classes))/counts[c]
-                self._blob[self._flags.DATA_KEYS[2]].append(weights)
+                # if weights need to be computed, compute here using label (index 1)
+                if self._flags.COMPUTE_WEIGHT:
+                    labels  = self._blob[self._flags.DATA_KEYS[1]][-1]
+                    weights = np.zeros(shape=labels.shape,dtype=np.float32)
+                    classes,counts = np.unique(labels,return_counts=True)
+                    for c in range(len(classes)):
+                        idx = np.where(labels == float(c))[0]
+                        weights[idx] = float(len(labels))/(len(classes))/counts[c]
+                    self._blob[self._flags.DATA_KEYS[2]].append(weights)
 
-            if self._flags.PARTICLE:
-                particle_v = br_blob['mcst'].as_vector()
-                part_info = get_particle_info(particle_v)
-                self._blob['particles'].append(part_info)
+                if self._flags.PARTICLE:
+                    particle_v = br_blob['mcst'].as_vector()
+                    part_info = get_particle_info(particle_v)
+                    self._blob['particles'].append(part_info)
 
-            total_point  += num_point
-            total_sample += 1.
-            sys.stdout.write('Processed %d samples (%d%% ... %d MB\r' % (int(total_sample),int(event_fraction*entry),int(total_data*4/1.e6)))
+                total_point  += num_point
+                total_sample += 1.
+                sys.stdout.write('Processed %d samples (%d%% ... %d MB\r' % (int(total_sample),int(event_fraction*entry),int(total_data*4/1.e6)))
+                sys.stdout.flush()
+
+            sys.stdout.write('\n')
+            sys.stdout.write('Total: %d samples (%d points) ... %d MB\n' % (total_sample,total_point,total_data*4/1.e6))
             sys.stdout.flush()
-
-        sys.stdout.write('\n')
-        sys.stdout.write('Total: %d samples (%d points) ... %d MB\n' % (total_sample,total_point,total_data*4/1.e6))
-        sys.stdout.flush()
-        data = self._blob[self._flags.DATA_KEYS[0]]
-        self._num_channels = data[0].shape[-1]
-        self._num_entries = len(data)
-        # Output
-        if self._flags.OUTPUT_FILE:
-            import tempfile
-            cfg = '''
-IOManager: {
-      Verbosity:   2
-      Name:        "IOManager"
-      IOMode:      1
-      OutFileName: "%s"
-      InputFiles:  []
-      InputDirs:   []
-      StoreOnlyType: []
-      StoreOnlyName: []
-    }
-                  '''
-            cfg = cfg % self._flags.OUTPUT_FILE
-            cfg_file = tempfile.NamedTemporaryFile('w')
-            cfg_file.write(cfg)
-            cfg_file.flush()
-            self._fout = larcv.IOManager(cfg_file.name)
-            self._fout.initialize()
+            data = self._blob[self._flags.DATA_KEYS[0]]
+            self._num_channels = data[0].shape[-1]
+            self._num_entries = len(data)
+            # Output
+            if self._flags.OUTPUT_FILE:
+                import tempfile
+                cfg = '''
+    IOManager: {
+          Verbosity:   2
+          Name:        "IOManager"
+          IOMode:      1
+          OutFileName: "%s"
+          InputFiles:  []
+          InputDirs:   []
+          StoreOnlyType: []
+          StoreOnlyName: []
+        }
+                      '''
+                cfg = cfg % self._flags.OUTPUT_FILE
+                cfg_file = tempfile.NamedTemporaryFile('w')
+                cfg_file.write(cfg)
+                cfg_file.flush()
+                self._fout = larcv.IOManager(cfg_file.name)
+                self._fout.initialize()
 
     def set_index_start(self,idx):
         self.stop_threads()
