@@ -9,70 +9,8 @@ from larcv import larcv
 #from SparseSSNetWorker import SparseSSNetWorker
 import numpy as np
 def main():
-    print('I am in pyhton got %s %s' % (2,4))
-    print(os.path.dirname(os.path.abspath(__file__)))
-#    sys.argv = ['uresnet.py', 'inference','--full' ,'-pl','0','-uf','16','-mp','Plane0snapshot-13999.ckpt','-io' ,'larcv_sparse', '-bs', '1', '-nc', '5', '-rs', '1', '-ss', '512', '-dd', '2', '-uns', '5',  '-dkeys' ,'wire,label', '-mn', 'uresnet_sparse' ,'-it', '1', '-ld', 'log', '-if', 'larcv_5label.root'];
-    sys.argv = ['uresnet.py', 'train',
-                '-pl','2',
-                '-uf','16',
-                '-io' ,'larcv_sparse',
-                '-bs', '1',
-                '-nc', '5',
-                '-rs', '1',
-                '-ss', '512',
-                '-dd', '2',
-                '-uns', '5',
-                '-dkeys' ,'wire,label',
-                '-mn', 'uresnet_sparse' ,
-                '-it', '1',
-                '-ld', 'log',
-                '-if', 'larcv_5label_1.root,larcv_5label_2.root',
-#                '-if','larcv_5label_1.root',
-                '-wp','Garbage',
-                '-sh','0']
-
-    print(len(sys.argv))
-#    for x in sys.argv:
-#        print(x)
-#    x = SparseSSNetWorker(0,0,'Plane0snapshot-13999.ckpt')
-    print ('Before calling flags print %s' % 2)
-#    flags = URESNET_FLAGS()
-#    flags.RanTest(2,4)
-
-    
     flags = URESNET_FLAGS()
     flags.parse_args()
-    '''
-    br_blob={}
-    blob = {}
-
-    ch = TChain('sparse2d_wire_tree')
-    ch.AddFile('larcv_5label.root')  # Adding the files RanItay
-    ch.GetEntry(0)
-    br_blob['wire'] = getattr(ch, 'sparse2d_wire_branch')
-    br_data = br_blob['wire']
-    br_data = br_data.as_vector().front()
-    num_point = br_blob['wire'].as_vector().front().as_vector().size()
-    np_voxel  = np.zeros(shape=(num_point, 2),dtype=np.int32)
-    as_numpy_voxels = larcv.fill_2d_voxels
-    as_numpy_pcloud = larcv.fill_2d_pcloud
-    as_numpy_voxels(br_data, np_voxel)
-    blob['voxels']=np_voxel
-    np_feature = np.zeros(shape=(num_point,1),dtype=np.float32)
-    as_numpy_pcloud(br_data,  np_feature)
-    blob['feature']=np_feature
-    blob['batch_id'] = np.zeros(shape=(num_point,1),dtype=np.int32)
-
-    flags = URESNET_FLAGS()
-    flags.parse_args()
-    data = np.hstack((blob['voxels'],blob['batch_id'],blob['feature']))
-
-
-    '''
-    print('bla')
-#    print(np_data)
-
-#
 
 
 
