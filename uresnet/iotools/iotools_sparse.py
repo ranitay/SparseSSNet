@@ -272,38 +272,38 @@ class io_larcv_sparse(io_base):
                             weights[idx] = float(len(labels))/(len(classes))/counts[c]
                         self._blob[self._flags.DATA_KEYS[2]].append(weights)
 
-                    total_point  += num_point
-                    total_sample += 1.
-                    sys.stdout.write('Processed %d samples (%d%% ... %d MB\r' % (int(total_sample),int(event_fraction*entry),int(total_data*4/1.e6)))
-                    sys.stdout.flush()
+            total_point  += num_point
+            total_sample += 1.
+            sys.stdout.write('Processed %d samples (%d%% ... %d MB\r' % (int(total_sample),int(event_fraction*entry),int(total_data*4/1.e6)))
+            sys.stdout.flush()
 
-                sys.stdout.write('\n')
-                sys.stdout.write('Total: %d samples (%d points) ... %d MB\n' % (total_sample,total_point,total_data*4/1.e6))
-                sys.stdout.flush()
-                data = self._blob[self._flags.DATA_KEYS[0]]
-                self._num_channels = data[0].shape[-1]
-                self._num_entries = len(data)
-    # Output
-                if self._flags.OUTPUT_FILE:
-                    import tempfile
-                    cfg = '''
-        IOManager: {
-              Verbosity:   2
-              Name:        "IOManager"
-              IOMode:      1
-              OutFileName: "%s"
-              InputFiles:  []
-              InputDirs:   []
-              StoreOnlyType: []
-              StoreOnlyName: []
-            }
-                          '''
-                    cfg = cfg % self._flags.OUTPUT_FILE
-                    cfg_file = tempfile.NamedTemporaryFile('w')
-                    cfg_file.write(cfg)
-                    cfg_file.flush()
-                    self._fout = larcv.IOManager(cfg_file.name)
-                    self._fout.initialize()
+        sys.stdout.write('\n')
+        sys.stdout.write('Total: %d samples (%d points) ... %d MB\n' % (total_sample,total_point,total_data*4/1.e6))
+        sys.stdout.flush()
+        data = self._blob[self._flags.DATA_KEYS[0]]
+        self._num_channels = data[0].shape[-1]
+        self._num_entries = len(data)
+# Output
+        if self._flags.OUTPUT_FILE:
+            import tempfile
+            cfg = '''
+IOManager: {
+      Verbosity:   2
+      Name:        "IOManager"
+      IOMode:      1
+      OutFileName: "%s"
+      InputFiles:  []
+      InputDirs:   []
+      StoreOnlyType: []
+      StoreOnlyName: []
+    }
+                  '''
+            cfg = cfg % self._flags.OUTPUT_FILE
+            cfg_file = tempfile.NamedTemporaryFile('w')
+            cfg_file.write(cfg)
+            cfg_file.flush()
+            self._fout = larcv.IOManager(cfg_file.name)
+            self._fout.initialize()
         print('done')
 ## Continoue here this should work
 
