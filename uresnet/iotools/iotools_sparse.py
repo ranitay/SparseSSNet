@@ -274,11 +274,11 @@ class io_larcv_sparse(io_base):
 
                     total_point  += num_point
                     total_sample += 1.
-                    sys.stdout.write('Processed %d samples (%d%% ... %d MB\r' % (int(total_sample),int(event_fraction*entry),int(total_data*4/1.e6)))
+#                    sys.stdout.write('Processed %d samples (%d%% ... %d MB\r' % (int(total_sample),int(event_fraction*entry),int(total_data*4/1.e6)))
                     sys.stdout.flush()
 
-                sys.stdout.write('\n')
-                sys.stdout.write('Total: %d samples (%d points) ... %d MB\n' % (total_sample,total_point,total_data*4/1.e6))
+#                sys.stdout.write('\n')
+#                sys.stdout.write('Total: %d samples (%d points) ... %d MB\n' % (total_sample,total_point,total_data*4/1.e6))
                 sys.stdout.flush()
                 data = self._blob[self._flags.DATA_KEYS[0]]
                 self._num_channels = data[0].shape[-1]
@@ -433,12 +433,12 @@ class io_larcv_sparse(io_base):
 
                 total_point  += num_point
                 total_sample += 1.
-                sys.stdout.write('Processed %d samples (%d%% ... %d MB\r' % (int(total_sample),int(event_fraction*entry),int(total_data*4/1.e6)))
-                sys.stdout.flush()
+#                sys.stdout.write('Processed %d samples (%d%% ... %d MB\r' % (int(total_sample),int(event_fraction*entry),int(total_data*4/1.e6)))
+#                sys.stdout.flush()
 
-            sys.stdout.write('\n')
-            sys.stdout.write('Total: %d samples (%d points) ... %d MB\n' % (total_sample,total_point,total_data*4/1.e6))
-            sys.stdout.flush()
+#            sys.stdout.write('\n')
+#            sys.stdout.write('Total: %d samples (%d points) ... %d MB\n' % (total_sample,total_point,total_data*4/1.e6))
+#            sys.stdout.flush()
             data = self._blob[self._flags.DATA_KEYS[0]]
             self._num_channels = data[0].shape[-1]
             self._num_entries = len(data)
