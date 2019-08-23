@@ -463,6 +463,15 @@ IOManager: {
                 cfg_file.flush()
                 self._fout = larcv.IOManager(cfg_file.name)
                 self._fout.initialize()
+    def Applythreshold(self):
+        blob = {}
+        for key in self._blob.keys():
+            blob[key] = []
+        for i,image in enumerate(self._blob['wire']):
+            mask = np.where(np.logical_and(image[:,2]>=10,image[:,2]<=300))[0]
+            for key in self._blob.keys():
+                blob[key].append(self._blob[key][i][mask])
+        self._blob = blob
 
     def set_index_start(self,idx):
         self.stop_threads()
@@ -553,11 +562,7 @@ IOManager: {
         if self._flags.DATA_DIM == 3:
             vs = as_tensor(voxel,feature,meta,0.)
         elif self._flags.DATA_DIM == 2:
-            data = self._blob[self._flags.DATA_KEYS[0]][idx].reshape((-1,))
-	    print('idx = %d ' % idx)
-	    print('__________________%s___________________' % np.arange(data.shape[0]))
-            vs = as_tensor(data, np.arange(data.shape[0]))
-#	    vs = as_tensor(voxel,feature,meta,0.)
+            vs = as_tensor(voxel,feature,meta,0.)
 
 	
         larcv_data.set(vs,meta)
