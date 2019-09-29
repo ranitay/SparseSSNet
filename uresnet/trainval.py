@@ -170,66 +170,66 @@ class trainval(object):
         self.tspent_sum['forward'] += self.tspent['forward']
         return res
 
-def initialize(self):
-    # To use DataParallel all the inputs must be on devices[0] first
-    model = None
-    if self._flags.MODEL_NAME == 'uresnet_sparse':
-        model = models.SparseUResNet
-        self._criterion = models.SparseSegmentationLoss(self._flags)
-    elif self._flags.MODEL_NAME == 'uresnet_dense':
-        model = models.DenseUResNet
-        self._criterion = models.DenseSegmentationLoss(self._flags)
-    else:
-        raise Exception("Unknown model name provided")
+    def initialize(self):
+        # To use DataParallel all the inputs must be on devices[0] first
+        model = None
+        if self._flags.MODEL_NAME == 'uresnet_sparse':
+            model = models.SparseUResNet
+            self._criterion = models.SparseSegmentationLoss(self._flags)
+        elif self._flags.MODEL_NAME == 'uresnet_dense':
+            model = models.DenseUResNet
+            self._criterion = models.DenseSegmentationLoss(self._flags)
+        else:
+            raise Exception("Unknown model name provided")
 
-    self.tspent_sum['forward'] = self.tspent_sum['train'] = self.tspent_sum['save'] = 0.
-    self.tspent['forward'] = self.tspent['train'] = self.tspent['save'] = 0.
+        self.tspent_sum['forward'] = self.tspent_sum['train'] = self.tspent_sum['save'] = 0.
+        self.tspent['forward'] = self.tspent['train'] = self.tspent['save'] = 0.
 
-    # if len(self._flags.GPUS) > 0:
-    self._net = GraphDataParallel(model(self._flags),
-                                  device_ids=self._flags.GPUS,
-                                  dense=('sparse' not in self._flags.MODEL_NAME))
-    # else:
-    #     self._net = model
+        # if len(self._flags.GPUS) > 0:
+        self._net = GraphDataParallel(model(self._flags),
+                                      device_ids=self._flags.GPUS,
+                                      dense=('sparse' not in self._flags.MODEL_NAME))
+        # else:
+        #     self._net = model
 
-    if self._flags.TRAIN:
-        self._net.train()
-    else:
-        self._net.eval()
+        if self._flags.TRAIN:
+            self._net.train()
+        else:
+            self._net.eval()
 
-    if torch.cuda.is_available():
-        self._net.cuda()
-        self._criterion.cuda()
+        if torch.cuda.is_available():
+            self._net.cuda()
+            self._criterion.cuda()
 
-    self._optimizer = torch.optim.Adam(self._net.parameters(), lr=self._flags.LEARNING_RATE)
-    self._softmax = torch.nn.Softmax(dim=1 if 'sparse' in self._flags.MODEL_NAME else 0)
+        self._optimizer = torch.optim.Adam(self._net.parameters(), lr=self._flags.LEARNING_RATE)
+        self._softmax = torch.nn.Softmax(dim=1 if 'sparse' in self._flags.MODEL_NAME else 0)
 
-    iteration = 0
-    if self._flags.MODEL_PATH:
-        if not os.path.isfile(self._flags.MODEL_PATH):
-            sys.stderr.write('File not found: %s\n' % self._flags.MODEL_PATH)
-            raise ValueError
-        print('Restoring weights from %s...' % self._flags.MODEL_PATH)
-        with open(self._flags.MODEL_PATH, 'rb') as f:
-            if len(self._flags.GPUS) > 0:
-                checkpoint = torch.load(f)
-            else:
-                checkpoint = torch.load(f, map_location='cpu')
-            # print(checkpoint['state_dict']['module.conv1.1.running_mean'],
-            #       checkpoint['state_dict']['module.conv1.1.running_var'])
-            # for key in checkpoint['state_dict']:
-            #     if key not in self._net.state_dict():
-            #         checkpoint['state_dict'].pop(key, None)
-            #         print('Ignoring %s' % key)
-            # new_state = self._net.state_dict()
-            # new_state.update(checkpoint['state_dict'])
-            self._net.load_state_dict(checkpoint['state_dict'], strict=False)
-            if self._flags.TRAIN:
-                # This overwrites the learning rate, so reset the learning rate
-                self._optimizer.load_state_dict(checkpoint['optimizer'])
-                for g in self._optimizer.param_groups:
-                    g['lr'] = self._flags.LEARNING_RATE
-            iteration = checkpoint['global_step'] + 1
-        print('Done.')
-
-    return iteration
+        iteration = 0
+        if self._flags.MODEL_PATH:
+            if not os.path.isfile(self._flags.MODEL_PATH):
+                sys.stderr.write('File not found: %s\n' % self._flags.MODEL_PATH)
+                raise ValueError
+            print('Restoring weights from %s...' % self._flags.MODEL_PATH)
+            with open(self._flags.MODEL_PATH, 'rb') as f:
+                if len(self._flags.GPUS) > 0:
+                    checkpoint = torch.load(f)
+                else:
+                    checkpoint = torch.load(f, map_location='cpu')
+                # print(checkpoint['state_dict']['module.conv1.1.running_mean'],
+                #       checkpoint['state_dict']['module.conv1.1.running_var'])
+                # for key in checkpoint['state_dict']:
+                #     if key not in self._net.state_dict():
+                #         checkpoint['state_dict'].pop(key, None)
+                #         print('Ignoring %s' % key)
+                # new_state = self._net.state_dict()
+                # new_state.update(checkpoint['state_dict'])
+                self._net.load_state_dict(checkpoint['state_dict'], strict=False)
+                if self._flags.TRAIN:
+                    # This overwrites the learning rate, so reset the learning rate
+                    self._optimizer.load_state_dict(checkpoint['optimizer'])
+                    for g in self._optimizer.param_groups:
+                        g['lr'] = self._flags.LEARNING_RATE
+                iteration = checkpoint['global_step'] + 1
+            print('Done.')
+    
+        return iteration
