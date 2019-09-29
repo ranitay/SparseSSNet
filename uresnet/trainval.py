@@ -22,7 +22,7 @@ class trainval(object):
         total_loss = 0.0
         for loss in self._loss:
             total_loss += loss
-        total_loss /= len(self._loss)
+#        total_loss /= len(self._loss) # RanItay change this
         self._loss = []  # Reset loss accumulator
 
         self._optimizer.zero_grad()  # Reset gradients accumulation
@@ -120,7 +120,7 @@ class trainval(object):
         """
         data = data_blob['data']
         label = data_blob.get('label', None)
-        weight = data_blob.get('weights', None)
+        weight = data_blob.get('weight', None)
         # matplotlib.image.imsave('data0.png', data[0, 0, ...])
         # matplotlib.image.imsave('data1.png', data[1, 0, ...])
         # print(label.shape, np.unique(label, return_counts=True))
