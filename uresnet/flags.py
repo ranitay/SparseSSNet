@@ -25,7 +25,7 @@ class URESNET_FLAGS:
     BN_MOMENTUM = 0.9
 
     # flags for train/inference
-    COMPUTE_WEIGHT = True
+    COMPUTE_WEIGHT = False
     SEED           = -1
     LEARNING_RATE  = 0.001
     GPUS           = []
