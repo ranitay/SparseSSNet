@@ -69,7 +69,8 @@ class SegmentationLoss(torch.nn.modules.loss._Loss):
                 if weight is not None:
                     event_weight = weight[i][batch_index]
                     event_weight = torch.squeeze(event_weight, dim=-1).float()
-                    total_loss += torch.mean(loss_seg * event_weight)
+		    total_loss += torch.sum(loss_seg * event_weight) # RanItay change this
+#                   total_loss += torch.mean(loss_seg * event_weight)
                 else:
                     total_loss += torch.mean(loss_seg)
                 total_count += 1
