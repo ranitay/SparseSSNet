@@ -65,6 +65,8 @@ class trainval(object):
             data  = blob['data'][idx]
             if 'label' in blob:
                 label = blob['label'][idx]
+            if 'weight' in blob:
+                weight = blob['weight'][idx]
 #            if (idx % 10000 ==0):
 #	    	print('number of points = %s and number of points removed for low Thresh is %s, number of points removed above high thresh is %s' %
 #                    (np.sum(data[:, 3]>=0), np.sum(data[:, 3] <= 10),np.sum(data[:,3]>=300)))
@@ -73,17 +75,24 @@ class trainval(object):
             thresh_data  = np.zeros( (N_Thresh,data.shape[1]),  dtype=data.dtype  )
             if 'label' in blob:
 		    thresh_label  = np.zeros( (N_Thresh,label.shape[1]),  dtype=label.dtype  )
+            if 'weight' in blob:
+		    thresh_weight  = np.zeros( (N_Thresh,weight.shape[1]),  dtype=weight.dtype  )
 
             for i in range(data.shape[0]):
                 if(np.logical_and(data[i,3]>=10 ,data[i,3]<=300)):
                     thresh_data[i_Thresh,:] =data[i,:]
                     if 'label' in blob:
                         thresh_label[i_Thresh,:] = label[i,:]
+		    if 'weight' in blob:
+                        thresh_weight[i_Thresh,:] = label[i,:]
+
                     i_Thresh +=1
 
             blob['data'][idx]  = thresh_data
             if 'label' in blob:
                 blob['label'][idx]  = thresh_label
+	    if 'weight' in blob:
+                blob['weight'][idx]  = thresh_weight
 
 
 

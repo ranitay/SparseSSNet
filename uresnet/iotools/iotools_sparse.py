@@ -178,6 +178,7 @@ class io_larcv_sparse(io_base):
         self.set_index_start(0)
 
     def initialize(self):
+	first = True
         plane_id = self._flags.PLANE
         print('________________plane id is %d_________________' % plane_id)
         self._event_keys = []
@@ -262,15 +263,41 @@ class io_larcv_sparse(io_base):
                     total_data += np_data.size
                     self._blob[key].append(np_data)
 
-                    # if weights need to be computed, compute here using label (index 1)
+
                     if self._flags.COMPUTE_WEIGHT:
-                        labels  = self._blob[self._flags.DATA_KEYS[1]][-1]
-                        weights = np.zeros(shape=labels.shape,dtype=np.float32)
-                        classes,counts = np.unique(labels,return_counts=True)
-                        for c in range(len(classes)):
-                            idx = np.where(labels == float(c))[0]
-                            weights[idx] = float(len(labels))/(len(classes))/counts[c]
-                        self._blob[self._flags.DATA_KEYS[2]].append(weights)
+                    	labels  = self._blob[self._flags.DATA_KEYS[1]][-1]
+                    	weights = np.zeros(shape=labels.shape,dtype=np.float32)
+                    	classes,counts = np.unique(labels,return_counts=True)
+                    	# weight by class only hip mip shower
+			for c in range(len(classes)):
+                        	idx = np.where(labels == float(c))[0]
+                        	if (c>2):
+					weights[idx] = float(1/(len(classes))/counts[c])
+				else:
+					weights[idx] = float(5*len(labels))/(len(classes))/counts[c] 
+			#weight vertices and X surronding
+                    	xy_cor = self._blob['voxels'][-1]
+                    	x= xy_cor[:,0]
+                    	y= xy_cor[:,1]
+			offset = 3
+			vertex_factor = 3
+                    	weights = np.ones(shape=labels.shape,dtype=np.float32)
+			ver_weights = np.zeros(shape=labels.shape,dtype=np.float32)
+			for id_cur in range(len(labels)-1):
+				for id_check in range(id_cur,len(labels)):
+					if ( (abs(x[id_cur] - x[id_check])<=offset ) and 
+					   (abs(y[id_cur] - y[id_check])<=offset ) and 
+					   (labels[id_check] != labels[id_cur ])):
+						if (ver_weights[id_cur] == 0):
+							ver_weights[id_cur]+=vertex_factor
+                                                if (ver_weights[id_check] == 0):
+							ver_weights[id_check]+=vertex_factor
+			weights = np.add(ver_weights,weights)*0.5				
+#                    	weights = np.zeros(shape=labels.shape,dtype=np.float32)*1000
+			if (first):
+				np.savetxt('test.out', weights, fmt='%1.4e')   # use exponential notation
+				first=False
+                    	self._blob[self._flags.DATA_KEYS[2]].append(weights)
 
             total_point  += num_point
             total_sample += 1.
@@ -280,6 +307,7 @@ class io_larcv_sparse(io_base):
         sys.stdout.write('\n')
         sys.stdout.write('Total: %d samples (%d points) ... %d MB\n' % (total_sample,total_point,total_data*4/1.e6))
         sys.stdout.flush()
+        self.Applythreshold()
         data = self._blob[self._flags.DATA_KEYS[0]]
         self._num_channels = data[0].shape[-1]
         self._num_entries = len(data)
@@ -417,13 +445,19 @@ IOManager: {
                 self._blob[key].append(np_data)
 
                 # if weights need to be computed, compute here using label (index 1)
+
                 if self._flags.COMPUTE_WEIGHT:
                     labels  = self._blob[self._flags.DATA_KEYS[1]][-1]
                     weights = np.zeros(shape=labels.shape,dtype=np.float32)
                     classes,counts = np.unique(labels,return_counts=True)
                     for c in range(len(classes)):
                         idx = np.where(labels == float(c))[0]
-                        weights[idx] = float(len(labels))/(len(classes))/counts[c]
+                        if (c>2):
+				weights[idx] = float(1000)#1/(len(classes)))
+			else:
+				weights[idx] = float(1000)#len(labels))/(len(classes))/counts[c]
+                    weights = np.ones(shape=labels.shape,dtype=np.float32)
+
                     self._blob[self._flags.DATA_KEYS[2]].append(weights)
 
                 if self._flags.PARTICLE:
