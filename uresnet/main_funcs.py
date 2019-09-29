@@ -115,7 +115,8 @@ def log(handlers, tstamp_iteration, tspent_iteration, tsum, res, flags, epoch):
 
     report_step  = flags.REPORT_STEP and ((handlers.iteration+1) % flags.REPORT_STEP == 0)
 
-    loss_seg = np.mean(res['loss_seg'])
+#    loss_seg = np.mean(res['loss_seg']) # RanItay change this
+    loss_seg = np.sum(res['loss_seg'])
     acc_seg  = np.mean(res['accuracy'])
 
     if len(flags.GPUS) > 0:
