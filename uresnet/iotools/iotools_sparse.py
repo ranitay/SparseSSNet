@@ -178,7 +178,6 @@ class io_larcv_sparse(io_base):
         self.set_index_start(0)
 
     def initialize(self):
-	first = True
         plane_id = self._flags.PLANE
         print('________________plane id is %d_________________' % plane_id)
         self._event_keys = []
@@ -307,7 +306,7 @@ class io_larcv_sparse(io_base):
         sys.stdout.write('\n')
         sys.stdout.write('Total: %d samples (%d points) ... %d MB\n' % (total_sample,total_point,total_data*4/1.e6))
         sys.stdout.flush()
-#        self.Applythreshold()
+        self.Applythreshold()
         data = self._blob[self._flags.DATA_KEYS[0]]
         self._num_channels = data[0].shape[-1]
         self._num_entries = len(data)
