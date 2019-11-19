@@ -22,7 +22,7 @@ class trainval(object):
         total_loss = 0.0
         for loss in self._loss:
             total_loss += loss
-        print(en(self._loss))
+#        print(en(self._loss))
 #        total_loss /= len(self._loss) # RanItay change this
         self._loss = []  # Reset loss accumulator
 
