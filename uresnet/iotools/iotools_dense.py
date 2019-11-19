@@ -28,7 +28,7 @@ def make_input_larcv_cfg(flags):
         if i == 1:
             # special treatment for "label"
             cfg = '        %s: { Tensor%dDProducer: "%s" EmptyVoxelValue: %d }\n'
-            cfg = cfg % (key,flags.DATA_DIM,key,flags.NUM_CLASS-1)
+            cfg = cfg % (key,flags.DATA_DIM,key,flags.NUM_CLASS)
             proccfg += cfg
         else:
             cfg = '        %s: { Tensor%dDProducer: "%s" }\n'
