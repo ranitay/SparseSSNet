@@ -53,8 +53,8 @@ MainIO: {
     %s
     %s
     %s
-    NumThreads: 2
-    NumBatchStorage: 2
+    NumThreads: 1
+    NumBatchStorage: 1
     ProcessList: {
        %s
     }
@@ -196,6 +196,8 @@ class io_larcv_dense(io_base):
                 blob[key] = np.array(np.swapaxes(np.swapaxes(np.swapaxes(data,4,3),3,2),2,1))
             else:
                 blob[key] = np.array(np.swapaxes(np.swapaxes(data,3,2),2,1))
+       # Ran ITay Change here to threshold
+        blob = self.Applythreshold(blob)
         idx = np.array(self._ihandler.fetch_entries())
         self._next_counter += 1
         return idx, blob
@@ -204,3 +206,18 @@ class io_larcv_dense(io_base):
         self._ihandler.reset()
         if self._fout:
             self._fout.finalize()
+
+    def Applythreshold(self, orig_blob):
+        blob = {}
+        for key in orig_blob.keys():
+            blob[key] = []
+        for i,image in enumerate(orig_blob['wire']):
+            mask = np.where((image<=10)|(image>=300)|(image!=0))
+            for key in orig_blob.keys():
+                blob[key].append(orig_blob[key][i])
+                if (key == 'label'):
+                    blob[key][i][mask] = 5
+                else:
+                    blob[key][i][mask] = 0 # label 0 is proton so label 5 is no ADC pixel
+        return blob
+

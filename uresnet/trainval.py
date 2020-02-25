@@ -62,39 +62,40 @@ class trainval(object):
 
             for key in data_blob.keys():
                 blob[key] = data_blob[key][idx]
-
-            data  = blob['data'][idx]
-            if 'label' in blob:
-                label = blob['label'][idx]
-            if 'weights' in blob:
-                weight = blob['weights'][idx]
-            #            if (idx % 10000 ==0):
-            #	    	print('number of points = %s and number of points removed for low Thresh is %s, number of points removed above high thresh is %s' %
-            #                    (np.sum(data[:, 3]>=0), np.sum(data[:, 3] <= 10),np.sum(data[:,3]>=300)))
-            N_Thresh = np.sum(np.logical_and(data[:, 3] >= 10 ,data[:,3]<=300))
-            i_Thresh = 0
-            thresh_data  = np.zeros( (N_Thresh,data.shape[1]),  dtype=data.dtype  )
-            if 'label' in blob:
-                thresh_label  = np.zeros( (N_Thresh,label.shape[1]),  dtype=label.dtype  )
-            if 'weights' in blob:
-                thresh_weight  = np.zeros( (N_Thresh,weight.shape[1]),  dtype=weight.dtype  )
-
-            for i in range(data.shape[0]):
-                if(np.logical_and(data[i,3]>=10 ,data[i,3]<=300)):
-                    thresh_data[i_Thresh,:] =data[i,:]
-                    if 'label' in blob:
-                        thresh_label[i_Thresh,:] = label[i,:]
-                    if 'weights' in blob:
-                        thresh_weight[i_Thresh,:] = label[i,:]
-
-                    i_Thresh +=1
-
-            blob['data'][idx]  = thresh_data
-            if 'label' in blob:
-                blob['label'][idx]  = thresh_label
-            if 'weights' in blob:
-                blob['weights'][idx]  = thresh_weight
-
+            '''    
+            if self._flags.MODEL_NAME==uresnet_sparse:
+                data  = blob['data'][idx]
+                if 'label' in blob:
+                    label = blob['label'][idx]
+                if 'weights' in blob:
+                    weight = blob['weights'][idx]
+                #            if (idx % 10000 ==0):
+                #	    	print('number of points = %s and number of points removed for low Thresh is %s, number of points removed above high thresh is %s' %
+                #                    (np.sum(data[:, 3]>=0), np.sum(data[:, 3] <= 10),np.sum(data[:,3]>=300)))
+                N_Thresh = np.sum(np.logical_and(data[:, 3] >= 10 ,data[:,3]<=300))
+                i_Thresh = 0
+                thresh_data  = np.zeros( (N_Thresh,data.shape[1]),  dtype=data.dtype  )
+                if 'label' in blob:
+                    thresh_label  = np.zeros( (N_Thresh,label.shape[1]),  dtype=label.dtype  )
+                if 'weights' in blob:
+                    thresh_weight  = np.zeros( (N_Thresh,weight.shape[1]),  dtype=weight.dtype  )
+    
+                for i in range(data.shape[0]):
+                    if(np.logical_and(data[i,3]>=10 ,data[i,3]<=300)):
+                        thresh_data[i_Thresh,:] =data[i,:]
+                        if 'label' in blob:
+                            thresh_label[i_Thresh,:] = label[i,:]
+                        if 'weights' in blob:
+                            thresh_weight[i_Thresh,:] = label[i,:]
+    
+                        i_Thresh +=1
+    
+                blob['data'][idx]  = thresh_data
+                if 'label' in blob:
+                    blob['label'][idx]  = thresh_label
+                if 'weights' in blob:
+                    blob['weights'][idx]  = thresh_weight
+            '''
 
 
 
@@ -129,11 +130,12 @@ class trainval(object):
         # matplotlib.image.imsave('label1.png', label[1, 0, ...])
         with torch.set_grad_enabled(self._flags.TRAIN):
             # Segmentation
+#            data = torch.as_tensor(data)
             data = [torch.as_tensor(d) for d in data]
             if torch.cuda.is_available():
                 data = [d.cuda() for d in data]
             else:
-                data = data[0]
+               data = data[0]
             tstart = time.time()
             segmentation = self._net(data)
             if not torch.cuda.is_available():
