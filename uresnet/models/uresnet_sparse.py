@@ -72,7 +72,8 @@ class SegmentationLoss(torch.nn.modules.loss._Loss):
                     total_loss += torch.sum(loss_seg * event_weight) # RanItay change this
 #                   total_loss += torch.mean(loss_seg * event_weight)
                 else:
-                    total_loss += torch.mean(loss_seg)
+#                    total_loss += torch.mean(loss_seg)
+		    total_loss += torch.sum(loss_seg)
                 total_count += 1
 
                 # Accuracy

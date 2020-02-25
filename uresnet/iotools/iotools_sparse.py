@@ -178,7 +178,6 @@ class io_larcv_sparse(io_base):
         self.set_index_start(0)
 
     def initialize(self):
-	first = True
         plane_id = self._flags.PLANE
         print('________________plane id is %d_________________' % plane_id)
         self._event_keys = []
