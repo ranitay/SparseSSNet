@@ -11,7 +11,7 @@ from distutils.util import strtobool
 
 class URESNET_FLAGS:
 
-    # flags for model
+    # flags for model,
     NUM_CLASS  = 2
     MODEL_NAME = ""
     TRAIN      = True
