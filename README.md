@@ -40,4 +40,4 @@ Main command-line parameters:
 
 
 ## Authors
-Ran Itay & Kazuhiro Terao
+Ran Itay & Laura Domine & Kazuhiro Terao
