@@ -1,25 +1,21 @@
 # uresnet_pytorch
 PyTorch implementations of dense and sparse UResNet
 
-This README is very rough and will be completed soon. Stay tuned!
-
 ## Software containers
-Singularity containers are available on https://www.singularity-hub.org/containers/6596.
+Singularity containers are available on https://www.singularity-hub.org/containers/6555.
 
-## Dataset
-LArTPC simulation dataset are publicly available on https://osf.io/9b3cv/.
 
 ## Run
 All options can be found in `uresnet/flags.py`. 
 
 To train sparse U-ResNet you can use for example:
 ```
-python bin/uresnet.py train -chks 500 -wp weights/snapshot -io larcv_sparse -bs 1 --gpus 0 -nc 5 -rs 1 -ss 512 -dd 3 -uns 5 -uf 16 -dkeys data,fivetypes -mn uresnet_sparse -it 10 -ld log -if your_data.root
+python bin/uresnet.py train -chks 500 -wp weights/snapshot -pl 2 -io larcv_sparse -bs 1 --gpus 0 -nc 5 -rs 1 -ss 512 -dd 3 -uns 5 -uf 16 -dkeys data,fivetypes -mn uresnet_sparse -it 10 -ld log -if your_data.root
 ```
 
 To run the inference:
 ```
-python bin/uresnet.py inference --full -mp weights/snapshot-1000.ckpt -io larcv_sparse -bs 1 --gpus 0 -nc 5 -rs 1 -ss 512 -dd 3 -uns 5 -uf 16 -dkeys data,fivetypes -mn uresnet_sparse -it 10 -ld log -if your_data.root
+python bin/uresnet.py inference --full -pl 2 -mp weights/snapshot-1000.ckpt -io larcv_sparse -bs 1 --gpus 0 -nc 5 -rs 1 -ss 512 -dd 3 -uns 5 -uf 16 -dkeys data,fivetypes -mn uresnet_sparse -it 10 -ld log -if your_data.root
 ```
 
 Main command-line parameters:
@@ -40,7 +36,8 @@ Main command-line parameters:
 * `-ld` log directory
 * `-if` input file
 * `-mp` weight files to load for inference
+* `-pl` wire plane number 
 
 
 ## Authors
-Laura Domine & Kazuhiro Terao
+Ran Itay & Kazuhiro Terao
